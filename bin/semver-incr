@@ -1,44 +1,81 @@
-#!/bin/sh
+#!/bin/bash
 set -eu
+
 BIN="`dirname "$0"`"
+PREFIX="v"
+SUFFIX=""
+GIT_PATH=""
+VERBOSE=0
 
-SINCE="`$BIN/_current-semver`"
-if [ "$SINCE" == "" ]; then
-    echo "1.0.0"
-    exit 0
-fi
-STEP="`"$BIN/_messages-since" "$SINCE" | "$BIN/_messages-to-step"`"
-if [ "$STEP" != "" ]; then
-    "$BIN/_semver-step" "$SINCE" "$STEP"
-fi
-exit 0
+help() {
+    cat <<EOF >&2
+Suggest a next semver based on your project's git tags. Optionally, create and push a git tag for the suggested semver - suitable for CI.
 
-# get commit messages
-# TODO: monorepo narrowed paths
-# TODO: use stdin instead, for testing
-# https://stackoverflow.com/questions/74086312/do-not-show-pgp-signature-in-git-log
-# MESSAGES=`git rev-list "$SINCE"..HEAD --no-commit-header --format=%B`
-MESSFILE=`mktemp`
-git rev-list "$SINCE"..HEAD --format=%B > "$MESSFILE"
-# MESSAGES=`git rev-list "$SINCE"..HEAD`
+Monorepo with packages versioned separately? Call this once for each package, using --prefix and --path.
 
-# analyze commit messages for release triggers.
-# not very fancy. I bet there are edge cases I'm missing.
-step() {
-    if grep -q -E '^feat!:|^BREAKING CHANGE:' "$MESSFILE"; then
-        echo major
-    elif grep -q -E '^feat:' "$MESSFILE"; then
-        echo minor
-    elif grep -q -E '^fix:' "$MESSFILE"; then
-        echo patch
-    # else
-        # echo none
-    fi
+Usage: $EXE [--prefix VERSION_PREFIX] [--suffix VERSION_SUFFIX] [--path PATH]
+
+    -h, --help             show this help message and exit
+    -v, --verbose          show detailed output
+    --path PATH            show only commits that affect PATH. Useful for monorepos.
+    --prefix PREFIX        text before all git tags. Useful for monorepos. Default: "v"
+    --suffix SUFFIX        text after all git tags. Default: ""
+EOF
+}
+fail() {
+    echo "$@" >&2
+    echo >&2
+    help
+}
+logv() {
+    [ $VERBOSE -eq 1 ] && echo "$@" >&2 || true
 }
 
-step
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --path)
+            GIT_PATH="$2"
+            shift;shift;;
+        --prefix)
+            PREFIX="$2"
+            shift;shift;;
+        --suffix)
+            SUFFIX="$2"
+            shift;shift;;
+        -v|--verbose)
+            VERBOSE=1
+            shift;;
+        -h|--help)
+            help
+            exit 0
+            ;;
+        -*|--*)
+            echo "unknown option $1"
+            echo
+            help
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1")
+            shift;;
+    esac
+done
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
-# TODO: increment version, output new version. https://github.com/npm/node-semver#functions
+SINCE="`$BIN/_current-semver --prefix "$PREFIX" --suffix "$SUFFIX"`"
+if [ "$SINCE" == "" ]; then
+    echo "${PREFIX}1.0.0${SUFFIX}"
+    exit 0
+fi
+MESSAGES_SINCE_ARGS=("$SINCE")
+[[ "$GIT_PATH" != "" ]] && MESSAGES_SINCE_ARGS+=("$GIT_PATH")
+STEP="`"$BIN/_messages-since" "${MESSAGES_SINCE_ARGS[@]}" | "$BIN/_messages-to-step"`"
+if [ "$STEP" != "" ]; then
+    VERSION=`"$BIN/_semver-step" "$SINCE" "$STEP"`
+    echo "$PREFIX$VERSION$SUFFIX"
+fi
+
 # TODO: create git tag, if enabled (disabled by default, no side effects)
 # git tag <version>
 # TODO: push git tag, if enabled (disabled by default, no side effects)
@@ -48,3 +85,4 @@ step
 # npm version <VERSION> --no-git-tag-version
 # npm publish [--dry-run]
 # npm version 0.0.0 --no-git-tag-version
+# probably create a separate package for npm stuff!

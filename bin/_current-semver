@@ -13,10 +13,10 @@ Get the most recent version from this repository's git tags.
 
 Usage: $EXE [--prefix PREFIX] [--suffix SUFFIX] [--verbose]
 
-    -h, --help          show this help message and exit
-    -v, --verbose       show detailed output
-    --prefix            text before all git tags. Default "v"
-    --suffix            text after all git tags. Default: ""
+    -h, --help              show this help message and exit
+    -v, --verbose           show detailed output
+    --prefix PREFIX         text before all git tags. Default "v"
+    --suffix SUFFIX         text after all git tags. Default: ""
 
 EOF
 }

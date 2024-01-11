@@ -23,16 +23,19 @@ EXE=_current-semver
     assert_output ""
 }
 @test "$EXE: unchanged" {
+    # these are all configured in setup.bash
     git checkout unchanged
     run $EXE
     assert_output "v1.0.0"
 }
 @test "$EXE: prefix match" {
+    # these are all configured in setup.bash
     git checkout unchanged
     run $EXE --prefix somepackage-v
     assert_output "somepackage-v1.0.0"
 }
 @test "$EXE: fancy prefix match" {
+    # these are all configured in setup.bash
     git checkout unchanged
     run $EXE --prefix @fancy/package-v
     assert_output "@fancy/package-v1.0.0"

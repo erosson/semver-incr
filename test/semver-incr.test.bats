@@ -20,7 +20,7 @@ EXE=semver-incr
 @test "$EXE: empty" {
     git checkout empty
     run $EXE
-    assert_output "1.0.0"
+    assert_output "v1.0.0"
 }
 @test "$EXE: unchanged" {
     git checkout unchanged
@@ -30,15 +30,46 @@ EXE=semver-incr
 @test "$EXE: patch" {
     git checkout patch
     run $EXE
-    assert_output "1.0.1"
+    assert_output "v1.0.1"
 }
 @test "$EXE: minor" {
     git checkout minor
     run $EXE
-    assert_output "1.1.0"
+    assert_output "v1.1.0"
 }
 @test "$EXE: major" {
     git checkout major
     run $EXE
-    assert_output "2.0.0"
+    assert_output "v2.0.0"
+}
+@test "$EXE: monorepo a" {
+    git checkout monorepo
+    run $EXE --prefix a-v --path a
+    assert_output "a-v1.0.1"
+}
+@test "$EXE: monorepo b" {
+    git checkout monorepo
+    run $EXE --prefix b-v --path b
+    assert_output "b-v1.1.0"
+}
+@test "$EXE: monorepo c" {
+    git checkout monorepo
+    run $EXE --prefix c-v --path c
+    assert_output "c-v2.0.0"
+}
+@test "$EXE: monorepo d" {
+    git checkout monorepo
+    run $EXE --prefix d-v --path d
+    assert_output "d-v1.0.1"
+}
+@test "$EXE: monorepo e" {
+    # empty monorepo; one untagged commit (no feat:/fix:). even for untagged commits, always create v1 asap
+    git checkout monorepo
+    run $EXE --prefix e-v --path e
+    assert_output "e-v1.0.0"
+}
+@test "$EXE: monorepo f" {
+    git checkout monorepo
+    run $EXE --prefix f-v --path f
+    assert_output ""
 }

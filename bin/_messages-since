@@ -10,11 +10,12 @@ help() {
     cat <<EOF >&2
 List all git commit messages after a given commit, formatted for 
 
-Usage: $EXE SINCE_COMMIT [--until UNTIL_COMMIT]
+Usage: $EXE SINCE_COMMIT [--until UNTIL_COMMIT] [PATH...]
 
     -h, --help             show this help message and exit
     -v, --verbose          show detailed output
     --until UNTIL_COMMIT   show messages between SINCE_COMMIT and UNTIL_COMMIT. default: HEAD
+    PATH                   show only commits that affect PATH
 EOF
 }
 fail() {
@@ -56,13 +57,9 @@ else
     fail "not enough arguments"
     exit 1
 fi
-if [[ $# -gt 0 ]]; then
-    fail "too many arguments: $1"
-    exit 1
-fi
 
 logv since: $SINCE_COMMIT
 logv until: $UNTIL_COMMIT
 
 COMMIT_RANGE="$SINCE_COMMIT..$UNTIL_COMMIT"
-git rev-list "$COMMIT_RANGE" --format=%B
+git rev-list --format=%B "$COMMIT_RANGE" -- "$@"
