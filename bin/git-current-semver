@@ -1,0 +1,76 @@
+#!/bin/bash
+set -eu
+
+PREFIX="v"
+SUFFIX=""
+VERBOSE=0
+POSITIONAL_ARGS=()
+EXE="`basename $0`"
+
+help() {
+    cat <<EOF >&2
+Get the most recent version from this repository's git tags.
+
+Usage: $EXE [--prefix PREFIX] [--suffix SUFFIX] [--verbose]
+
+    -h, --help          show this help message and exit
+    -v, --verbose       show detailed output
+    --prefix            text before all git tags. Default "v"
+    --suffix            text after all git tags. Default: ""
+
+EOF
+}
+fail() {
+    echo "$@" >&2
+    echo >&2
+    help
+}
+logv() {
+    [ $VERBOSE -eq 1 ] && echo "$@" >&2 || true
+}
+
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --prefix)
+            PREFIX="$2"
+            shift;shift;;
+        --suffix)
+            SUFFIX="$2"
+            shift;shift;;
+        -v|--verbose)
+            VERBOSE=1
+            shift;;
+        -h|--help)
+            help
+            exit 0
+            ;;
+        -*|--*)
+            echo "unknown option $1"
+            echo
+            help
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1")
+            shift;;
+    esac
+done
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+if [[ $# -gt 0 ]]; then
+    echo "too many arguments: $1"
+    help
+    exit 1
+fi
+
+logv prefix: $PREFIX
+logv suffix: $SUFFIX
+
+MATCH="${PREFIX}[0-9]*.[0-9]*.[0-9]*${SUFFIX}"
+logv match:  $MATCH
+
+# looking at commits since this last tag
+# TODO: this expression is not quite right, it matches "v1x.1y.1z", when it should not
+# TODO: prereleases, like v0.0.0-beta
+# TODO: monorepo prefixes, like <packagename>-v0.0.0
+git describe --tag --abbrev=0 --match "$MATCH" 2>/dev/null || echo ""

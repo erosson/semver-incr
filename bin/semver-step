@@ -1,0 +1,95 @@
+#!/bin/bash
+# based on https://jon.sprig.gs/blog/post/1175
+set -eu
+
+VERBOSE=0
+POSITIONAL_ARGS=()
+EXE="`basename $0`"
+
+help() {
+    cat <<EOF >&2
+Convert git messages to a semver version change recommendation. Send git messages to stdin.
+
+Usage: $EXE VERSION [major|minor|patch]
+
+    -h, --help             show this help message and exit
+    -v, --verbose          show detailed output
+EOF
+}
+fail() {
+    echo "$@" >&2
+    echo >&2
+    help
+}
+logv() {
+    [ $VERBOSE -eq 1 ] && echo "$@" >&2 || true
+}
+
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=1
+            shift;;
+        -h|--help)
+            help
+            exit 0
+            ;;
+        -*|--*)
+            fail "unknown option $1"
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1")
+            shift;;
+    esac
+done
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+if [[ $# -gt 0 ]]; then
+    VERSION="$1"
+    shift
+fi
+if [[ $# -gt 0 ]]; then
+    STEP="$1"
+    shift
+else
+    fail "not enough arguments"
+    exit 1
+fi
+if [[ $# -gt 0 ]]; then
+    fail "too many arguments: $1"
+    exit 1
+fi
+
+RE='[^0-9]*\([0-9]*\)[.]\([0-9]*\)[.]\([0-9]*\)\([0-9A-Za-z-]*\)'
+
+MAJOR=`echo $VERSION | sed -e "s#$RE#\1#"`
+MINOR=`echo $VERSION | sed -e "s#$RE#\2#"`
+PATCH=`echo $VERSION | sed -e "s#$RE#\3#"`
+
+logv pre-major: $MAJOR
+logv pre-minor: $MINOR
+logv pre-patch: $PATCH
+
+case "$STEP" in
+    major)
+        let MAJOR+=1
+        MINOR=0
+        PATCH=0
+        ;;
+    minor)
+        let MINOR+=1
+        PATCH=0
+        ;;
+    patch)
+        let PATCH+=1
+        ;;
+    *)
+        fail "unknown step: $STEP"
+        exit 1
+esac
+logv post-major: $MAJOR
+logv post-minor: $MINOR
+logv post-patch: $PATCH
+
+echo "$MAJOR.$MINOR.$PATCH"

@@ -1,0 +1,47 @@
+#!/bin/sh
+set -eu
+BIN="`dirname "$0"`"
+
+SINCE="`$BIN/git-current-semver`"
+# TODO: if no previous semvers, this returns blank. need to git-messages-since from the beginning, but "" doesn't do that!
+STEP="`"$BIN/git-messages-since" "$SINCE" | "$BIN/git-messages-to-step"`"
+if [ "$STEP" != "" ]; then
+    "$BIN/semver-step" "$SINCE" "$STEP"
+fi
+exit 0
+
+# get commit messages
+# TODO: monorepo narrowed paths
+# TODO: use stdin instead, for testing
+# https://stackoverflow.com/questions/74086312/do-not-show-pgp-signature-in-git-log
+# MESSAGES=`git rev-list "$SINCE"..HEAD --no-commit-header --format=%B`
+MESSFILE=`mktemp`
+git rev-list "$SINCE"..HEAD --format=%B > "$MESSFILE"
+# MESSAGES=`git rev-list "$SINCE"..HEAD`
+
+# analyze commit messages for release triggers.
+# not very fancy. I bet there are edge cases I'm missing.
+step() {
+    if grep -q -E '^feat!:|^BREAKING CHANGE:' "$MESSFILE"; then
+        echo major
+    elif grep -q -E '^feat:' "$MESSFILE"; then
+        echo minor
+    elif grep -q -E '^fix:' "$MESSFILE"; then
+        echo patch
+    # else
+        # echo none
+    fi
+}
+
+step
+
+# TODO: increment version, output new version. https://github.com/npm/node-semver#functions
+# TODO: create git tag, if enabled (disabled by default, no side effects)
+# git tag <version>
+# TODO: push git tag, if enabled (disabled by default, no side effects)
+# git push <version>
+
+# no npm-push? this tool should be mostly language-agnostic. give the caller the version + exit-code and let them do that. it's not too hard:
+# npm version <VERSION> --no-git-tag-version
+# npm publish [--dry-run]
+# npm version 0.0.0 --no-git-tag-version

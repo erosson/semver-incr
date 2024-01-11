@@ -1,0 +1,65 @@
+#!/bin/bash
+set -eu
+
+VERBOSE=0
+POSITIONAL_ARGS=()
+EXE="`basename $0`"
+
+help() {
+    cat <<EOF >&2
+Convert git messages to a semver version change recommendation. Send git messages to stdin.
+
+Usage: $EXE SINCE_COMMIT [--until UNTIL_COMMIT]
+
+    -h, --help             show this help message and exit
+    -v, --verbose          show detailed output
+EOF
+}
+fail() {
+    echo "$@" >&2
+    echo >&2
+    help
+}
+logv() {
+    [ $VERBOSE -eq 1 ] && echo "$@" >&2 || true
+}
+
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=1
+            shift;;
+        -h|--help)
+            help
+            exit 0
+            ;;
+        -*|--*)
+            fail "unknown option $1"
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1")
+            shift;;
+    esac
+done
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+if [[ $# -gt 0 ]]; then
+    fail "too many arguments: $1"
+    exit 1
+fi
+
+MESSFILE=`mktemp`
+cat > $MESSFILE
+
+QUIET="`[ $VERBOSE -eq 1 ] && true || echo -q`"
+logv quiet: "$QUIET"
+if grep $QUIET -E '^feat!:|^BREAKING CHANGE:' "$MESSFILE"; then
+    echo major
+elif grep $QUIET -E '^feat:' "$MESSFILE"; then
+    echo minor
+elif grep $QUIET -E '^fix:' "$MESSFILE"; then
+    echo patch
+# else
+    # echo none
+fi

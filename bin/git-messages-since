@@ -1,0 +1,72 @@
+#!/bin/bash
+set -eu
+
+UNTIL_COMMIT="HEAD"
+VERBOSE=0
+POSITIONAL_ARGS=()
+EXE="`basename $0`"
+
+help() {
+    cat <<EOF >&2
+List all git commit messages after a given commit, formatted for 
+
+Usage: $EXE SINCE_COMMIT [--until UNTIL_COMMIT]
+
+    -h, --help             show this help message and exit
+    -v, --verbose          show detailed output
+    --until UNTIL_COMMIT   show messages between SINCE_COMMIT and UNTIL_COMMIT. default: HEAD
+EOF
+}
+fail() {
+    echo "$@" >&2
+    echo >&2
+    help
+}
+logv() {
+    [ $VERBOSE -eq 1 ] && echo "$@" >&2 || true
+}
+
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --until)
+            UNTIL_COMMIT="$2"
+            shift;shift;;
+        -v|--verbose)
+            VERBOSE=1
+            shift;;
+        -h|--help)
+            help
+            exit 0
+            ;;
+        -*|--*)
+            fail "unknown option $1"
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1")
+            shift;;
+    esac
+done
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+if [[ $# -gt 0 ]]; then
+    SINCE_COMMIT="$1"
+    shift
+else
+    fail "not enough arguments"
+    exit 1
+fi
+if [[ $# -gt 0 ]]; then
+    fail "too many arguments: $1"
+    exit 1
+fi
+
+logv since: $SINCE_COMMIT
+logv until: $UNTIL_COMMIT
+
+if [ "$SINCE_COMMIT" == "" ]; then
+    COMMIT_RANGE="$UNTIL_COMMIT"
+else
+    COMMIT_RANGE="$SINCE_COMMIT..$UNTIL_COMMIT"
+fi
+git rev-list "$COMMIT_RANGE" --format=%B
