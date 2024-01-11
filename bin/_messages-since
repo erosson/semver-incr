@@ -1,19 +1,20 @@
 #!/bin/bash
-# based on https://jon.sprig.gs/blog/post/1175
 set -eu
 
+UNTIL_COMMIT="HEAD"
 VERBOSE=0
 POSITIONAL_ARGS=()
 EXE="`basename $0`"
 
 help() {
     cat <<EOF >&2
-Convert git messages to a semver version change recommendation. Send git messages to stdin.
+List all git commit messages after a given commit, formatted for 
 
-Usage: $EXE VERSION [major|minor|patch]
+Usage: $EXE SINCE_COMMIT [--until UNTIL_COMMIT]
 
     -h, --help             show this help message and exit
     -v, --verbose          show detailed output
+    --until UNTIL_COMMIT   show messages between SINCE_COMMIT and UNTIL_COMMIT. default: HEAD
 EOF
 }
 fail() {
@@ -28,6 +29,9 @@ logv() {
 # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --until)
+            UNTIL_COMMIT="$2"
+            shift;shift;;
         -v|--verbose)
             VERBOSE=1
             shift;;
@@ -46,11 +50,7 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 if [[ $# -gt 0 ]]; then
-    VERSION="$1"
-    shift
-fi
-if [[ $# -gt 0 ]]; then
-    STEP="$1"
+    SINCE_COMMIT="$1"
     shift
 else
     fail "not enough arguments"
@@ -61,35 +61,8 @@ if [[ $# -gt 0 ]]; then
     exit 1
 fi
 
-RE='[^0-9]*\([0-9]*\)[.]\([0-9]*\)[.]\([0-9]*\)\([0-9A-Za-z-]*\)'
+logv since: $SINCE_COMMIT
+logv until: $UNTIL_COMMIT
 
-MAJOR=`echo $VERSION | sed -e "s#$RE#\1#"`
-MINOR=`echo $VERSION | sed -e "s#$RE#\2#"`
-PATCH=`echo $VERSION | sed -e "s#$RE#\3#"`
-
-logv pre-major: $MAJOR
-logv pre-minor: $MINOR
-logv pre-patch: $PATCH
-
-case "$STEP" in
-    major)
-        let MAJOR+=1
-        MINOR=0
-        PATCH=0
-        ;;
-    minor)
-        let MINOR+=1
-        PATCH=0
-        ;;
-    patch)
-        let PATCH+=1
-        ;;
-    *)
-        fail "unknown step: $STEP"
-        exit 1
-esac
-logv post-major: $MAJOR
-logv post-minor: $MINOR
-logv post-patch: $PATCH
-
-echo "$MAJOR.$MINOR.$PATCH"
+COMMIT_RANGE="$SINCE_COMMIT..$UNTIL_COMMIT"
+git rev-list "$COMMIT_RANGE" --format=%B
