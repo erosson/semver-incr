@@ -1,8 +1,12 @@
 _setup() {
     export PATH="`pwd`/bin:$PATH"
-    export REPO=`mktemp --directory`
+    export DIR=`mktemp --directory`
+    export REPO="$DIR/repo"
+    export REMOTE="$DIR/remote"
+    git init $REMOTE
     git init $REPO
     cd $REPO
+    git remote add origin "file://$REMOTE"
 
     git checkout -b empty
     git commit --allow-empty -m 'init'
