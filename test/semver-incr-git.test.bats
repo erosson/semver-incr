@@ -13,10 +13,10 @@ setup() {
 }
 
 EXE=semver-incr-git
-# @test "$EXE: help" {
-    # run $EXE --help
-    # assert_output --partial Usage:
-# }
+@test "$EXE: help" {
+    run $EXE --help
+    assert_output --partial Usage:
+}
 @test "$EXE: empty" {
     git checkout empty
     run $EXE
