@@ -1,4 +1,4 @@
-# semver-incr
+# semver-incr-git
 
 Automates [semantic versioning](https://semver.org/) git tagging. Write [conventional commit messages](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format) for your project, run `semver-incr` (preferably from CI), and receive a git tag based on your commits.
 
@@ -12,21 +12,21 @@ In your commit messages, write `fix:`, `feat:`, or `feat!:`/`BREAKING CHANGE:` t
 
 For most repositories, this prints a suggested version number based on your commit messages:
 
-    $ semver-incr
+    $ semver-incr-git
     v1.2.3
     $ git show v1.2.3
     fatal: Failed to resolve 'v1.2.3' as a valid ref.
 
 By default, this is a dry-run - nothing changes. If things look right, commit and push the new tag:
 
-    $ semver-incr --execute
+    $ semver-incr-git --execute
     v1.2.3
     $ git show v1.2.3
     commit abc123...
 
 If you're in a monorepo and want to release each package separately, prefix its git tags and filter for its directory:
 
-    $ semver-incr --path ./packages/my-package --prefix @company/my-package/v #[--execute]
+    $ semver-incr-git --path ./packages/my-package --prefix @company/my-package/v #[--execute]
     @company/my-package/v1.2.3
 
 ## CHANGELOG files

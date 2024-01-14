@@ -12,7 +12,7 @@ setup() {
     load '/usr/lib/bats/bats-assert/load'
 }
 
-EXE=semver-incr
+EXE=semver-incr-git
 # @test "$EXE: help" {
     # run $EXE --help
     # assert_output --partial Usage:
