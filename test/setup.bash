@@ -7,6 +7,9 @@ _setup() {
     git init $REPO
     cd $REPO
     git remote add origin "file://$REMOTE"
+    git config init.defaultBranch main
+    git config user.email "test+erosson/semver-incr-git@example.com"
+    git config user.name "Test Test"
 
     git checkout -b empty
     git commit --allow-empty -m 'init'
