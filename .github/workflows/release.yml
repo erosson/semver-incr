@@ -20,6 +20,6 @@ jobs:
       - uses: devcontainers/ci@v0.3
         with:
           runCmd: ./bin/test
-      - run: ./bin/semver-incr --execute
+      - run: ./bin/semver-incr-git --execute
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
