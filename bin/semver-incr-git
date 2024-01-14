@@ -12,7 +12,7 @@ VERBOSE=0
 
 help() {
     cat <<EOF >&2
-Suggest a next semver based on your project's git tags. Optionally, create and push a git tag for the suggested semver - suitable for CI.
+Suggest a next semver based on your project's git commit messages. Optionally, create and push a git tag for the suggested semver - suitable for CI.
 
 Monorepo with packages versioned separately? Call this once for each package, using --prefix and --path.
 
