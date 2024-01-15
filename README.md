@@ -12,22 +12,28 @@ In your commit messages, write `fix:`, `feat:`, or `feat!:`/`BREAKING CHANGE:` t
 
 For most repositories, this prints a suggested version number based on your commit messages:
 
-    $ semver-incr-git
-    v1.2.3
-    $ git show v1.2.3
-    fatal: Failed to resolve 'v1.2.3' as a valid ref.
+```console
+$ semver-incr-git
+v1.2.3
+$ git show v1.2.3
+fatal: Failed to resolve 'v1.2.3' as a valid ref.
+```
 
 By default, this is a dry-run - nothing changes. If things look right, commit and push the new tag:
 
-    $ semver-incr-git --execute
-    v1.2.3
-    $ git show v1.2.3
-    commit abc123...
+```console
+$ semver-incr-git --execute
+v1.2.3
+$ git show v1.2.3
+commit abc123...
+```
 
 If you're in a monorepo and want to release each package separately, prefix its git tags and filter for its directory:
 
-    $ semver-incr-git --path ./packages/my-package --prefix @company/my-package/v #[--execute]
-    @company/my-package/v1.2.3
+```console
+$ semver-incr-git --path ./packages/my-package --prefix @company/my-package/v #[--execute]
+@company/my-package/v1.2.3
+```
 
 ## CHANGELOG files
 
