@@ -50,3 +50,5 @@ The most notable automated semantic versioning tools I tried:
 * https://github.com/microsoft/beachball
 
 There's a lot of them out there!
+
+I use this in [`semver-incr-npm`](https://github.com/erosson/ts-libs/tree/main/packages/semver-incr).
